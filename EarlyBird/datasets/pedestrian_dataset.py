@@ -63,16 +63,16 @@ class PedestrianDataset(VisionDataset):
         self.gt_fpath = os.path.join(self.root, 'gt.txt')
         self.prepare_gt()
 
-        self.calibration = {}
-        self.setup()
-
-    def setup(self):
-        intrinsic = torch.tensor(np.stack(self.base.intrinsic_matrices, axis=0), dtype=torch.float32)  # S,3,3
-        intrinsic = geom.merge_intrinsics(*geom.split_intrinsics(intrinsic)).squeeze()  # S,4,4
-        self.calibration['intrinsic'] = intrinsic
-        self.calibration['extrinsic'] = torch.eye(4)[None].repeat(intrinsic.shape[0], 1, 1)
-        self.calibration['extrinsic'][:, :3] = torch.tensor(
-            np.stack(self.base.extrinsic_matrices, axis=0), dtype=torch.float32)
+    #     self.calibration = {}
+    #     self.setup()
+    #
+    # def setup(self):
+    #     intrinsic = torch.tensor(np.stack(self.base.intrinsic_matrices, axis=0), dtype=torch.float32)  # S,3,3
+    #     intrinsic = geom.merge_intrinsics(*geom.split_intrinsics(intrinsic)).squeeze()  # S,4,4
+    #     self.calibration['intrinsic'] = intrinsic
+    #     self.calibration['extrinsic'] = torch.eye(4)[None].repeat(intrinsic.shape[0], 1, 1)
+    #     self.calibration['extrinsic'][:, :3] = torch.tensor(
+    #         np.stack(self.base.extrinsic_matrices, axis=0), dtype=torch.float32)
 
     def prepare_gt(self):
         og_gt = []
@@ -224,8 +224,9 @@ class PedestrianDataset(VisionDataset):
             sx = resize_dims[0] / float(W)
             sy = resize_dims[1] / float(H)
 
-            extrin = self.calibration['extrinsic'][cam]
-            intrin = self.calibration['intrinsic'][cam]
+            intrin, extrin = self.base.get_intrinsic_extrinsic_matrix(cam, frame)
+            intrin = torch.tensor(intrin, dtype=torch.float32)
+            extrin = torch.tensor(extrin, dtype=torch.float32)
             intrin = geom.scale_intrinsics(intrin.unsqueeze(0), sx, sy).squeeze(0)
 
             fx, fy, x0, y0 = geom.split_intrinsics(intrin.unsqueeze(0))
@@ -263,8 +264,8 @@ class PedestrianDataset(VisionDataset):
         cameras = list(range(self.num_cam))  # TODO: cam dropout?
 
         # images
-        imgs, intrins, extrins, centers_img, offsets_img, sizes_img, skeletons_img, pids_img, valids_img = \
-            self.get_image_data(index, cameras)
+        imgs, intrins, extrins, centers_img, offsets_img, sizes_img, skeletons_img, pids_img, valids_img = self.get_image_data(
+            index, cameras)
 
         worldcoord_from_worldgrid = torch.eye(4)
         worldcoord_from_worldgrid2d = torch.tensor(self.base.worldcoord_from_worldgrid_mat, dtype=torch.float32)

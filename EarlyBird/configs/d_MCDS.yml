@@ -1,0 +1,11 @@
+data:
+  class_path: datasets.PedestrianDataModule
+  init_args:
+    data_dir: "E:\\AirSim\\PythonClient\\multirotor\\EarlyBirdMCDS\\MCDS"
+model:
+  resolution: [300, 2, 300]  # Y,Z,X
+  bounds: [0, 300, 0, 300, 0, 2]  # xmin,xmax,ymin,ymax,zmin,zmax
+  depth: [100, 0, -20]
+  num_cameras: 6
+  num_ids: 350  # id: 0~349
+  gating_threshold: 30000
